@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Share, Plus } from "lucide-react";
 import { CreatePostModal } from "@/components/create-post-modal";
 import { getPosts } from "@/lib/actions/posts";
 import { PostCard } from "@/components/post-card";
+import { AddRelationshipDropdown } from "@/components/add-relationship-dropdown";
 
 export default async function FamilyFeedPage() {
   const supabase = await createClient();
@@ -36,6 +37,17 @@ export default async function FamilyFeedPage() {
           </Button>
         </CreatePostModal>
       </div>
+
+      {/* Add Relationship Section */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 shadow-sm">
+        <CardContent className="p-4">
+          <div className="text-center mb-3">
+            <h3 className="font-semibold text-gray-900 mb-1">Build Your Family Tree</h3>
+            <p className="text-sm text-gray-600">Add family relationships to connect with your loved ones</p>
+          </div>
+          <AddRelationshipDropdown currentUserId={user.id} />
+        </CardContent>
+      </Card>
 
       {/* Posts Feed */}
       <div className="space-y-4">

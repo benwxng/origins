@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, Bot, User } from "lucide-react";
+import { getUserDisplayInfo } from "@/lib/utils/profile";
+import { getInitials } from "@/lib/utils/display";
 
 export default async function ChatbotPage() {
   const supabase = await createClient();
@@ -14,6 +16,9 @@ export default async function ChatbotPage() {
   if (!user) {
     return redirect("/auth/login");
   }
+
+  // Get user profile information
+  const userInfo = await getUserDisplayInfo(user);
 
   // Placeholder chat messages - will be replaced with real data later
   const sampleMessages = [
@@ -87,14 +92,24 @@ export default async function ChatbotPage() {
                   }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
                       message.role === "user"
                         ? "bg-blue-500 text-white"
                         : "bg-purple-100 text-purple-600"
                     }`}
                   >
                     {message.role === "user" ? (
-                      <User className="w-4 h-4" />
+                      userInfo.avatarUrl ? (
+                        <img
+                          src={userInfo.avatarUrl}
+                          alt="Profile"
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white font-semibold text-xs">
+                          {getInitials(userInfo.fullName)}
+                        </span>
+                      )
                     ) : (
                       <Bot className="w-4 h-4" />
                     )}
