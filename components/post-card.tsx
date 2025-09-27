@@ -20,7 +20,7 @@ import Link from "next/link";
 interface FamilyMember {
   full_name: string;
   relationship: string;
-  profile_image_url?: string;
+  avatar_url?: string;
   user_id: string;
 }
 
@@ -83,10 +83,6 @@ export function PostCard({ post }: PostCardProps) {
   const title = contentLines[0] || "";
   const description = contentLines.slice(1).join("\n\n") || "";
 
-  // Get display information from pre-computed data
-  const displayName = post.family_members.displayName;
-  const avatarUrl = post.family_members.avatarUrl;
-
   // Check if current user is the author of this post
   const canDelete = currentUserId === post.family_members.user_id;
 
@@ -115,30 +111,38 @@ export function PostCard({ post }: PostCardProps) {
     <Card className="bg-white shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <Link 
+          <Link
             href={`/protected/profile/${post.family_members.user_id}`}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Profile"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-gray-600 font-semibold text-sm">
-                  {getInitials(displayName)}
-                </span>
-              )}
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900 hover:text-blue-600 transition-colors">
-                {displayName}
-              </p>
-              <p className="text-sm text-gray-500" suppressHydrationWarning>
-                {timeAgo}
-              </p>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                {post.family_members.avatar_url ? (
+                  <Image
+                    src={post.family_members.avatar_url}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-gray-600 font-semibold">
+                    {post.family_members.full_name
+                      .split(" ")
+                      .map((n: string) => n[0])
+                      .join("")
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {post.family_members.full_name}
+                </p>
+                <p className="text-sm text-gray-500" suppressHydrationWarning>
+                  {timeAgo}
+                </p>
+              </div>
             </div>
           </Link>
           <div className="flex items-center space-x-2">

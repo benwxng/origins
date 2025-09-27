@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { extractAllExistingContext } from "@/lib/actions/context-extraction";
+import { generateAllEmbeddings } from "@/lib/actions/embeddings";
 import { revalidatePath } from "next/cache";
 
 export default async function AdminPage() {
@@ -25,6 +26,17 @@ export default async function AdminPage() {
     .from("family_context")
     .select("*", { count: "exact", head: true });
 
+  // Check how many have embeddings
+  const { count: embeddedContextCount } = await supabase
+    .from("user_context")
+    .select("*", { count: "exact", head: true })
+    .not("embedding", "is", null);
+
+  const { count: embeddedFamilyContextCount } = await supabase
+    .from("family_context")
+    .select("*", { count: "exact", head: true })
+    .not("embedding", "is", null);
+
   async function runContextExtraction() {
     "use server";
 
@@ -33,6 +45,18 @@ export default async function AdminPage() {
       revalidatePath("/protected/admin");
     } catch (error) {
       console.error("Context extraction failed:", error);
+      throw error;
+    }
+  }
+
+  async function runEmbeddingGeneration() {
+    "use server";
+
+    try {
+      await generateAllEmbeddings();
+      revalidatePath("/protected/admin");
+    } catch (error) {
+      console.error("Embedding generation failed:", error);
       throw error;
     }
   }
@@ -47,15 +71,13 @@ export default async function AdminPage() {
         <p className="text-gray-600">Manage context extraction and AI system</p>
       </div>
 
-      {/* Context Status */}
+      {/* Context & Embedding Status */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
-          <h2 className="text-xl font-semibold text-gray-900">
-            Context Status
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900">System Status</h2>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center p-6 bg-blue-50 rounded-lg">
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {contextCount || 0}
@@ -68,6 +90,18 @@ export default async function AdminPage() {
               </div>
               <p className="text-gray-600">Family Context Entries</p>
             </div>
+            <div className="text-center p-6 bg-purple-50 rounded-lg">
+              <div className="text-3xl font-bold text-purple-600 mb-2">
+                {embeddedContextCount || 0}
+              </div>
+              <p className="text-gray-600">User Embeddings</p>
+            </div>
+            <div className="text-center p-6 bg-orange-50 rounded-lg">
+              <div className="text-3xl font-bold text-orange-600 mb-2">
+                {embeddedFamilyContextCount || 0}
+              </div>
+              <p className="text-gray-600">Family Embeddings</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -76,19 +110,17 @@ export default async function AdminPage() {
       <Card className="bg-white shadow-sm">
         <CardHeader>
           <h2 className="text-xl font-semibold text-gray-900">
-            Context Extraction
+            Step 1: Context Extraction
           </h2>
           <p className="text-gray-600">
-            Extract context from existing posts, memories, and profiles to
-            populate the FamilyGPT knowledge base.
+            Extract context from existing posts, memories, and profiles.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Note:</strong> This will process all existing posts,
-              memories, and profiles to create context entries. Run this once to
-              populate the knowledge base.
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Status:</strong> {contextCount || 0} context entries
+              extracted
             </p>
           </div>
 
@@ -100,43 +132,67 @@ export default async function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* Sample Context Preview */}
+      {/* Embedding Generation */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
           <h2 className="text-xl font-semibold text-gray-900">
-            Recent Context Entries
+            Step 2: Generate Embeddings
+          </h2>
+          <p className="text-gray-600">
+            Generate vector embeddings for AI search using OpenAI's
+            text-embedding-3-small model.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <p className="text-sm text-purple-800">
+              <strong>Status:</strong> {embeddedContextCount || 0} /{" "}
+              {contextCount || 0} user contexts have embeddings
+            </p>
+            <p className="text-sm text-purple-800">
+              <strong>Family:</strong> {embeddedFamilyContextCount || 0} /{" "}
+              {familyContextCount || 0} family contexts have embeddings
+            </p>
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-800">
+              <strong>Note:</strong> You need an OpenAI API key in your
+              environment variables (OPENAI_API_KEY). This will cost
+              approximately $0.01-0.05 for a typical family's context.
+            </p>
+          </div>
+
+          <form action={runEmbeddingGeneration}>
+            <Button
+              type="submit"
+              className="bg-purple-600 hover:bg-purple-700"
+              disabled={!contextCount}
+            >
+              Generate All Embeddings
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Next Steps */}
+      <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+        <CardHeader>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Step 3: Ready for FamilyGPT
           </h2>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {/* We'll show some sample entries here */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">
-                  Sample Post Context
-                </span>
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                  post
-                </span>
-              </div>
-              <p className="text-sm text-gray-800">
-                Title: New haircut
-                <br />
-                Description: Barber got me right
-                <br />
-                Author: wangbenjamin05 (member)
-                <br />
-                Post Type: general
-                <br />
-                Date: {new Date().toLocaleDateString()}
-              </p>
-            </div>
-
-            <div className="text-center text-gray-500">
-              <p>
-                Run context extraction to see actual entries from your database
-              </p>
-            </div>
+          <div className="space-y-3">
+            <p className="text-gray-700">
+              Once embeddings are generated, you can:
+            </p>
+            <ul className="list-disc list-inside space-y-1 text-gray-600">
+              <li>Search for similar context using vector similarity</li>
+              <li>Build the RAG pipeline with Gemini Flash</li>
+              <li>Answer questions like "What school did my mom go to?"</li>
+              <li>Tell stories about family members and their memories</li>
+            </ul>
           </div>
         </CardContent>
       </Card>

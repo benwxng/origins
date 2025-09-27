@@ -215,63 +215,23 @@ export async function getPosts() {
       family_members!inner(
         full_name,
         relationship,
-        profile_image_url,
+        avatar_url,
         user_id
       )
     `
     )
     .order("created_at", { ascending: false });
 
-  // Get profile data for all family members
-  const userIds = posts?.map(post => post.family_members.user_id).filter(Boolean) || [];
-  
-  if (userIds.length === 0) {
-    console.log("No user IDs found in posts");
-    return posts || [];
-  }
-
-  const { data: profiles, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, full_name, avatar_url, relation")
-    .in("id", userIds);
-  
-  if (profileError) {
-    console.error("Error fetching profiles:", profileError);
-  }
-
-  // Create a map of user_id to profile data
-  const profileMap = new Map();
-  profiles?.forEach(profile => {
-    profileMap.set(profile.id, profile);
-  });
-
-  // Transform the data to include display information
-  const transformedPosts = posts?.map(post => {
-    const profile = profileMap.get(post.family_members.user_id);
-    return {
-      ...post,
-      family_members: {
-        ...post.family_members,
-        displayName: profile?.full_name || post.family_members.full_name || "Family Member",
-        avatarUrl: profile?.avatar_url || post.family_members.profile_image_url || null,
-        relation: profile?.relation || null,
-      }
-    };
-  }) || [];
-
-  console.log("Transformed posts with avatars:", transformedPosts.map(p => ({
-    id: p.id,
-    displayName: p.family_members.displayName,
-    avatarUrl: p.family_members.avatarUrl,
-    userId: p.family_members.user_id
-  })));
+  console.log("getPosts - Raw data:", posts); // Debug log
+  console.log("getPosts - Error:", error); // Debug log
+  console.log("getPosts - Count:", posts?.length || 0); // Debug log
 
   if (error) {
     console.error("Error fetching posts:", error);
     return [];
   }
 
-  return transformedPosts;
+  return posts || [];
 }
 
 export async function getPostReactions(postId: string) {

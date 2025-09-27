@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { generateContextEmbedding } from "./embeddings";
 
 // Types for context extraction
 interface ContextEntry {
@@ -79,26 +80,43 @@ ${
       });
     }
 
-    // Insert into user_context table
+    // Insert into user_context table and generate embeddings
     for (const entry of contextEntries) {
-      const { error: insertError } = await supabase.from("user_context").upsert(
-        {
-          user_id: entry.user_id,
-          family_member_id: entry.family_member_id,
-          raw_text: entry.raw_text,
-          source_type: entry.source_type,
-          source_id: entry.source_id,
-          metadata: entry.metadata,
-          // Note: embedding will be null for now, we'll add embedding generation next
-        },
-        {
-          onConflict: "source_type,source_id",
-          ignoreDuplicates: false,
-        }
-      );
+      const { data: insertedContext, error: insertError } = await supabase
+        .from("user_context")
+        .upsert(
+          {
+            user_id: entry.user_id,
+            family_member_id: entry.family_member_id,
+            raw_text: entry.raw_text,
+            source_type: entry.source_type,
+            source_id: entry.source_id,
+            metadata: entry.metadata,
+          },
+          {
+            onConflict: "source_type,source_id",
+            ignoreDuplicates: false,
+          }
+        )
+        .select("id")
+        .single();
 
       if (insertError) {
         console.error("Error inserting post context:", insertError);
+        continue;
+      }
+
+      // 🚀 AUTO-GENERATE EMBEDDING for new context
+      if (insertedContext) {
+        try {
+          await generateContextEmbedding(insertedContext.id, "user_context");
+          console.log(
+            `✅ Generated embedding for post context: ${insertedContext.id}`
+          );
+        } catch (embeddingError) {
+          console.error("⚠️ Failed to generate embedding:", embeddingError);
+          // Continue even if embedding fails
+        }
       }
     }
 
@@ -188,25 +206,43 @@ ${
       });
     }
 
-    // Insert into user_context table
+    // Insert into user_context table and generate embeddings
     for (const entry of contextEntries) {
-      const { error: insertError } = await supabase.from("user_context").upsert(
-        {
-          user_id: entry.user_id,
-          family_member_id: entry.family_member_id,
-          raw_text: entry.raw_text,
-          source_type: entry.source_type,
-          source_id: entry.source_id,
-          metadata: entry.metadata,
-        },
-        {
-          onConflict: "source_type,source_id",
-          ignoreDuplicates: false,
-        }
-      );
+      const { data: insertedContext, error: insertError } = await supabase
+        .from("user_context")
+        .upsert(
+          {
+            user_id: entry.user_id,
+            family_member_id: entry.family_member_id,
+            raw_text: entry.raw_text,
+            source_type: entry.source_type,
+            source_id: entry.source_id,
+            metadata: entry.metadata,
+          },
+          {
+            onConflict: "source_type,source_id",
+            ignoreDuplicates: false,
+          }
+        )
+        .select("id")
+        .single();
 
       if (insertError) {
         console.error("Error inserting memory context:", insertError);
+        continue;
+      }
+
+      // 🚀 AUTO-GENERATE EMBEDDING for new context
+      if (insertedContext) {
+        try {
+          await generateContextEmbedding(insertedContext.id, "user_context");
+          console.log(
+            `✅ Generated embedding for memory context: ${insertedContext.id}`
+          );
+        } catch (embeddingError) {
+          console.error("⚠️ Failed to generate embedding:", embeddingError);
+          // Continue even if embedding fails
+        }
       }
     }
 
@@ -271,11 +307,11 @@ Profile created: ${new Date(member.created_at).toLocaleDateString()}
       });
     }
 
-    // Insert into user_context table
+    // Insert into user_context table and generate embeddings
     for (const entry of contextEntries) {
       if (entry.user_id) {
         // Only insert if user_id exists
-        const { error: insertError } = await supabase
+        const { data: insertedContext, error: insertError } = await supabase
           .from("user_context")
           .upsert(
             {
@@ -290,10 +326,26 @@ Profile created: ${new Date(member.created_at).toLocaleDateString()}
               onConflict: "source_type,source_id",
               ignoreDuplicates: false,
             }
-          );
+          )
+          .select("id")
+          .single();
 
         if (insertError) {
           console.error("Error inserting profile context:", insertError);
+          continue;
+        }
+
+        // 🚀 AUTO-GENERATE EMBEDDING for new context
+        if (insertedContext) {
+          try {
+            await generateContextEmbedding(insertedContext.id, "user_context");
+            console.log(
+              `✅ Generated embedding for profile context: ${insertedContext.id}`
+            );
+          } catch (embeddingError) {
+            console.error("⚠️ Failed to generate embedding:", embeddingError);
+            // Continue even if embedding fails
+          }
         }
       }
     }
