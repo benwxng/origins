@@ -48,9 +48,44 @@ export async function createPost(formData: FormData) {
       familyMember = newMember;
     }
 
-    // Handle image uploads (for now, we'll store placeholder URLs)
-    // In a real implementation, you'd upload to Supabase Storage
+    // Handle image uploads to Supabase Storage
     const imageUrls: string[] = [];
+    const imageFiles: File[] = [];
+
+    // Collect all image files from formData
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith("image-") && value instanceof File && value.size > 0) {
+        imageFiles.push(value);
+      }
+    }
+
+    // Upload each image to Supabase Storage
+    for (let i = 0; i < imageFiles.length; i++) {
+      const file = imageFiles[i];
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/${Date.now()}-${i}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("family-photos")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error("Error uploading image:", uploadError);
+        continue; // Skip this image but continue with others
+      }
+
+      // Get the public URL for the uploaded image
+      const { data: urlData } = supabase.storage
+        .from("family-photos")
+        .getPublicUrl(fileName);
+
+      if (urlData.publicUrl) {
+        imageUrls.push(urlData.publicUrl);
+      }
+    }
 
     // Create the post
     const { data: post, error: postError } = await supabase
@@ -74,6 +109,84 @@ export async function createPost(formData: FormData) {
   }
 }
 
+export async function deletePost(postId: string) {
+  const supabase = await createClient();
+
+  // Check if user is authenticated
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  try {
+    // Get the post and verify ownership
+    const { data: post, error: fetchError } = await supabase
+      .from("family_posts")
+      .select(
+        `
+        *,
+        family_members!inner(user_id)
+      `
+      )
+      .eq("id", postId)
+      .single();
+
+    if (fetchError || !post) {
+      throw new Error("Post not found");
+    }
+
+    // Check if the current user is the author of the post
+    if (post.family_members.user_id !== user.id) {
+      throw new Error("You can only delete your own posts");
+    }
+
+    // Delete associated images from storage
+    if (post.image_urls && post.image_urls.length > 0) {
+      for (const imageUrl of post.image_urls) {
+        // Extract the file path from the public URL
+        const urlParts = imageUrl.split(
+          "/storage/v1/object/public/family-photos/"
+        );
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1];
+
+          const { error: deleteError } = await supabase.storage
+            .from("family-photos")
+            .remove([filePath]);
+
+          if (deleteError) {
+            console.error("Error deleting image from storage:", deleteError);
+            // Continue with post deletion even if image deletion fails
+          }
+        }
+      }
+    }
+
+    // Delete post reactions first (due to foreign key constraints)
+    await supabase.from("post_reactions").delete().eq("post_id", postId);
+
+    // Delete post comments (if any exist)
+    await supabase.from("post_comments").delete().eq("post_id", postId);
+
+    // Delete the post
+    const { error: deletePostError } = await supabase
+      .from("family_posts")
+      .delete()
+      .eq("id", postId);
+
+    if (deletePostError) throw deletePostError;
+
+    revalidatePath("/protected");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    throw error;
+  }
+}
+
 export async function getPosts() {
   const supabase = await createClient();
 
@@ -85,7 +198,8 @@ export async function getPosts() {
       family_members!inner(
         full_name,
         relationship,
-        profile_image_url
+        profile_image_url,
+        user_id
       )
     `
     )
