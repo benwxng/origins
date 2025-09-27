@@ -39,8 +39,8 @@ export default async function FamilyFeedPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header with Post Button */}
-      <div className="flex items-center justify-between py-6">
+      {/* Header with Post Button - Aligned with sidebar title */}
+      <div className="flex items-center justify-between py-4 pt-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Family Feed</h1>
           <p className="text-gray-600">Stay connected with your loved ones</p>
