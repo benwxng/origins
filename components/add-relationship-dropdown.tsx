@@ -4,26 +4,33 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Check, ChevronDown, User } from "lucide-react";
-import { addFamilyRelationship, getFamilyMembers } from "@/lib/actions/relationships";
-import { RELATIONSHIP_OPTIONS, type FamilyMember } from "@/lib/utils/relationships";
+import { Users, Plus, Check, ChevronDown } from "lucide-react";
+import {
+  addFamilyRelationship,
+  getFamilyMembers,
+  type FamilyMember,
+} from "@/lib/actions/relationships";
+import { RELATIONSHIP_OPTIONS } from "@/lib/utils/relationships";
 import { getInitials } from "@/lib/utils/display";
 
 interface AddRelationshipDropdownProps {
   currentUserId: string;
-  onRelationshipAdded?: () => void;
 }
 
-export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: AddRelationshipDropdownProps) {
+export function AddRelationshipDropdown({
+  currentUserId,
+}: AddRelationshipDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedPerson, setSelectedPerson] = useState<FamilyMember | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<FamilyMember | null>(
+    null
+  );
   const [selectedRelationship, setSelectedRelationship] = useState<string>("");
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPersonDropdown, setShowPersonDropdown] = useState(false);
-  const [showRelationshipDropdown, setShowRelationshipDropdown] = useState(false);
+  const [showRelationshipDropdown, setShowRelationshipDropdown] =
+    useState(false);
 
   useEffect(() => {
     loadFamilyMembers();
@@ -33,8 +40,10 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
     setIsLoading(true);
     try {
       const members = await getFamilyMembers();
-      // Filter out the current user
-      setFamilyMembers(members.filter(member => member.id !== currentUserId));
+      console.log("All family members:", members); // Debug log
+
+      // Show ALL family members (no filtering for demo purposes)
+      setFamilyMembers(members);
     } catch (error) {
       console.error("Error loading family members:", error);
     } finally {
@@ -47,14 +56,20 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
 
     setIsSubmitting(true);
     try {
-      const result = await addFamilyRelationship(selectedPerson.id, selectedRelationship);
-      
+      const result = await addFamilyRelationship(
+        selectedPerson.id,
+        selectedRelationship
+      );
+
       if (result.success) {
         // Reset form
         setSelectedPerson(null);
         setSelectedRelationship("");
         setIsOpen(false);
-        onRelationshipAdded?.();
+
+        // Reload family members and refresh page
+        await loadFamilyMembers();
+        window.location.reload(); // Refresh to show new relationships in family tree
       } else {
         alert(`Error: ${result.error}`);
       }
@@ -87,7 +102,11 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
           <Users className="w-4 h-4" />
           {isOpen ? "Cancel Adding Relationship" : "Add Family Relationship"}
         </span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`w-4 h-4 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
       </Button>
 
       {/* Dropdown Content */}
@@ -99,7 +118,9 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
           <CardContent className="space-y-4">
             {/* Person Selection */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Select Family Member</Label>
+              <Label className="text-sm font-medium">
+                Select Family Member
+              </Label>
               <div className="relative">
                 <Button
                   variant="outline"
@@ -110,9 +131,9 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
                   {selectedPerson ? (
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                        {selectedPerson.avatar_url ? (
+                        {selectedPerson.profile_image_url ? (
                           <img
-                            src={selectedPerson.avatar_url}
+                            src={selectedPerson.profile_image_url}
                             alt="Profile"
                             className="w-6 h-6 rounded-full object-cover"
                           />
@@ -122,11 +143,15 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
                           </span>
                         )}
                       </div>
-                      <span className="text-sm">{selectedPerson.full_name}</span>
+                      <span className="text-sm">
+                        {selectedPerson.full_name}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-gray-500">
-                      {familyMembers.length === 0 ? "No family members found" : "Choose a family member..."}
+                      {familyMembers.length === 0
+                        ? "No family members found"
+                        : "Choose a family member..."}
                     </span>
                   )}
                   <ChevronDown className="w-4 h-4" />
@@ -145,9 +170,9 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
                         }}
                       >
                         <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                          {member.avatar_url ? (
+                          {member.profile_image_url ? (
                             <img
-                              src={member.avatar_url}
+                              src={member.profile_image_url}
                               alt="Profile"
                               className="w-8 h-8 rounded-full object-cover"
                             />
@@ -158,8 +183,12 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-sm">{member.full_name}</p>
-                          <p className="text-xs text-gray-500">@{member.username}</p>
+                          <p className="font-medium text-sm">
+                            {member.full_name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {member.relationship}
+                          </p>
                         </div>
                       </button>
                     ))}
@@ -171,24 +200,35 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
             {/* Relationship Selection */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">
-                {selectedPerson ? `What is your relationship to ${selectedPerson.full_name}?` : "Select Your Relationship"}
+                {selectedPerson
+                  ? `What is your relationship to ${selectedPerson.full_name}?`
+                  : "Select Your Relationship"}
               </Label>
               <p className="text-xs text-gray-500">
-                Define how you are related to this person (from your perspective)
+                Define how you are related to this person (from your
+                perspective)
               </p>
               <div className="relative">
                 <Button
                   variant="outline"
                   className="w-full justify-between"
-                  onClick={() => setShowRelationshipDropdown(!showRelationshipDropdown)}
+                  onClick={() =>
+                    setShowRelationshipDropdown(!showRelationshipDropdown)
+                  }
                   disabled={!selectedPerson}
                 >
                   {selectedRelationship ? (
                     <span className="text-sm">
-                      {RELATIONSHIP_OPTIONS.find(opt => opt.value === selectedRelationship)?.label}
+                      {
+                        RELATIONSHIP_OPTIONS.find(
+                          (opt) => opt.value === selectedRelationship
+                        )?.label
+                      }
                     </span>
                   ) : (
-                    <span className="text-gray-500">Choose relationship...</span>
+                    <span className="text-gray-500">
+                      Choose relationship...
+                    </span>
                   )}
                   <ChevronDown className="w-4 h-4" />
                 </Button>
@@ -207,8 +247,12 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-sm">{option.label}</p>
-                            <p className="text-xs text-gray-500">{option.description}</p>
+                            <p className="font-medium text-sm">
+                              {option.label}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {option.description}
+                            </p>
                           </div>
                           {selectedRelationship === option.value && (
                             <Check className="w-4 h-4 text-blue-600" />
@@ -224,7 +268,9 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!selectedPerson || !selectedRelationship || isSubmitting}
+              disabled={
+                !selectedPerson || !selectedRelationship || isSubmitting
+              }
               className="w-full"
             >
               {isSubmitting ? (
@@ -244,11 +290,19 @@ export function AddRelationshipDropdown({ currentUserId, onRelationshipAdded }: 
             {selectedPerson && selectedRelationship && (
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-800">
-                  <strong>{selectedPerson.full_name}</strong> will be added as your{" "}
-                  <strong>{RELATIONSHIP_OPTIONS.find(opt => opt.value === selectedRelationship)?.label}</strong>
+                  <strong>{selectedPerson.full_name}</strong> will be added as
+                  your{" "}
+                  <strong>
+                    {
+                      RELATIONSHIP_OPTIONS.find(
+                        (opt) => opt.value === selectedRelationship
+                      )?.label
+                    }
+                  </strong>
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  The system will automatically infer other family relationships.
+                  Both directions of the relationship will be created
+                  automatically.
                 </p>
               </div>
             )}
