@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, Users, MessageCircle, Heart, LogOut, Menu } from "lucide-react";
+import { Home, Users, MessageCircle, Heart, LogOut, Menu, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -87,8 +87,21 @@ export function Sidebar() {
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
+          {/* Profile and Footer */}
+          <div className="p-4 border-t border-gray-200 space-y-2">
+            <Link
+              href="/protected/profile"
+              className={cn(
+                "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                pathname === "/protected/profile"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              )}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <User className="w-5 h-5 mr-3" />
+              Profile
+            </Link>
             <Button
               variant="ghost"
               className="w-full justify-start text-gray-700 hover:bg-gray-100"

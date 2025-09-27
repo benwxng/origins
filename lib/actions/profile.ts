@@ -1,0 +1,116 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+
+export async function updateProfile(formData: any, avatarFile: File | null) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    let avatarUrl = formData.avatar_url;
+
+    // Handle avatar upload if a new file is provided
+    if (avatarFile) {
+      try {
+        const fileExt = avatarFile.name.split(".").pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = fileName; // Upload directly to bucket root, not in a subfolder
+
+        console.log('Attempting to upload avatar file...', { 
+          fileName, 
+          filePath, 
+          fileSize: avatarFile.size, 
+          fileType: avatarFile.type 
+        });
+        
+        // Try to upload the file directly - if bucket doesn't exist, we'll get a clear error
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, avatarFile);
+
+        if (uploadError) {
+          console.error('Upload error details:', {
+            message: uploadError.message,
+            statusCode: uploadError.statusCode,
+            error: uploadError.error
+          });
+          
+          // Provide more helpful error messages
+          if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+            throw new Error('Storage bucket "avatars" does not exist. Please create it in the Supabase dashboard under Storage > Buckets.');
+          } else if (uploadError.message.includes('policy')) {
+            throw new Error('Storage policy error. Please check that the avatars bucket has proper policies set up.');
+          } else {
+            throw new Error(`Failed to upload avatar: ${uploadError.message}`);
+          }
+        }
+
+        console.log('Upload successful:', uploadData);
+
+        // Get the public URL
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+
+        avatarUrl = urlData.publicUrl;
+        console.log('Avatar uploaded successfully:', avatarUrl);
+        
+      } catch (error) {
+        console.error('Avatar upload failed:', error);
+        throw new Error(`Avatar upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    // Update or insert profile data
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        full_name: formData.full_name,
+        username: formData.username,
+        phone: formData.phone || null,
+        location: formData.location || null,
+        pronouns: formData.pronouns || null,
+        bio: formData.bio || null,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (profileError) {
+      throw new Error(`Failed to update profile: ${profileError.message}`);
+    }
+
+    // Revalidate the profile page to show updated data
+    revalidatePath("/protected/profile");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+}
+
+export async function getProfile(userId: string) {
+  const supabase = await createClient();
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error && error.code !== "PGRST116") {
+    // PGRST116 is "not found" error, which is expected for new users
+    throw new Error(`Failed to fetch profile: ${error.message}`);
+  }
+
+  return profile;
+}
