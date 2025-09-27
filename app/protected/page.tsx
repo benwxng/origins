@@ -7,6 +7,22 @@ import { CreatePostModal } from "@/components/create-post-modal";
 import { getPosts } from "@/lib/actions/posts";
 import { PostCard } from "@/components/post-card";
 
+interface FamilyMember {
+  full_name: string;
+  relationship: string;
+  profile_image_url?: string;
+  user_id: string;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  post_type: string;
+  image_urls?: string[];
+  created_at: string;
+  family_members: FamilyMember;
+}
+
 export default async function FamilyFeedPage() {
   const supabase = await createClient();
 
@@ -19,7 +35,7 @@ export default async function FamilyFeedPage() {
   }
 
   // Fetch real posts from database
-  const posts = await getPosts();
+  const posts = (await getPosts()) as Post[];
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -61,7 +77,7 @@ export default async function FamilyFeedPage() {
             </CardContent>
           </Card>
         ) : (
-          posts.map((post: any) => <PostCard key={post.id} post={post} />)
+          posts.map((post) => <PostCard key={post.id} post={post} />)
         )}
       </div>
     </div>

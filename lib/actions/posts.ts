@@ -65,7 +65,7 @@ export async function createPost(formData: FormData) {
       const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}-${i}.${fileExt}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("family-photos")
         .upload(fileName, file, {
           cacheControl: "3600",

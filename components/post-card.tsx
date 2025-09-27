@@ -14,8 +14,24 @@ import { togglePostReaction, deletePost } from "@/lib/actions/posts";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 
+interface FamilyMember {
+  full_name: string;
+  relationship: string;
+  profile_image_url?: string;
+  user_id: string;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  post_type: string;
+  image_urls?: string[];
+  created_at: string;
+  family_members: FamilyMember;
+}
+
 interface PostCardProps {
-  post: any;
+  post: Post;
 }
 
 export function PostCard({ post }: PostCardProps) {

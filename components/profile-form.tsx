@@ -59,17 +59,17 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
 
   const processFile = (file: File) => {
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (JPG, PNG, or GIF)');
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file (JPG, PNG, or GIF)");
       return;
     }
-    
+
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
+      alert("File size must be less than 5MB");
       return;
     }
-    
+
     setAvatarFile(file);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -112,12 +112,12 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
     try {
       console.log("Submitting profile with data:", formData);
       console.log("Avatar file:", avatarFile);
-      
+
       const result = await updateProfile(formData, avatarFile);
       console.log("Profile update result:", result);
-      
+
       setUploadMessage("Profile updated successfully!");
-      
+
       // Clear the form file after successful upload
       if (avatarFile) {
         setAvatarFile(null);
@@ -126,7 +126,11 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      setUploadMessage(`Error updating profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setUploadMessage(
+        `Error updating profile: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -137,12 +141,16 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
       {/* Basic Information */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Basic Information</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            Basic Information
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="full_name" className="text-gray-900 font-medium">Full Name</Label>
+              <Label htmlFor="full_name" className="text-gray-900 font-medium">
+                Full Name
+              </Label>
               <Input
                 id="full_name"
                 name="full_name"
@@ -153,7 +161,9 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-gray-900 font-medium">Username</Label>
+              <Label htmlFor="username" className="text-gray-900 font-medium">
+                Username
+              </Label>
               <Input
                 id="username"
                 name="username"
@@ -166,7 +176,9 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-900 font-medium">Email</Label>
+            <Label htmlFor="email" className="text-gray-900 font-medium">
+              Email
+            </Label>
             <Input
               id="email"
               name="email"
@@ -181,7 +193,9 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="bio" className="text-gray-900 font-medium">Bio</Label>
+            <Label htmlFor="bio" className="text-gray-900 font-medium">
+              Bio
+            </Label>
             <Input
               id="bio"
               name="bio"
@@ -197,7 +211,9 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
       {/* Profile Picture */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Profile Picture</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            Profile Picture
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-6">
@@ -222,11 +238,11 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="avatar" className="cursor-pointer">
-                  <div 
+                  <div
                     className={`flex items-center space-x-2 px-4 py-3 border-2 border-dashed rounded-lg transition-colors ${
-                      isDragOver 
-                        ? 'border-blue-400 bg-blue-50' 
-                        : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                      isDragOver
+                        ? "border-blue-400 bg-blue-50"
+                        : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
                     }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -234,7 +250,9 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
                   >
                     <Upload className="w-4 h-4 text-gray-600" />
                     <span className="text-gray-700 font-medium">
-                      {isDragOver ? 'Drop photo here' : 'Choose Photo or Drag & Drop'}
+                      {isDragOver
+                        ? "Drop photo here"
+                        : "Choose Photo or Drag & Drop"}
                     </span>
                   </div>
                 </Label>
@@ -277,12 +295,16 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
       {/* Contact Information */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Contact Information</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            Contact Information
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-900 font-medium">Phone Number</Label>
+              <Label htmlFor="phone" className="text-gray-900 font-medium">
+                Phone Number
+              </Label>
               <Input
                 id="phone"
                 name="phone"
@@ -294,7 +316,9 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location" className="text-gray-900 font-medium">Location</Label>
+              <Label htmlFor="location" className="text-gray-900 font-medium">
+                Location
+              </Label>
               <Input
                 id="location"
                 name="location"
@@ -311,17 +335,23 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
       {/* Pronouns */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Pronouns</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            Pronouns
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-gray-900 font-medium">Select your pronouns</Label>
+            <Label className="text-gray-900 font-medium">
+              Select your pronouns
+            </Label>
             <div className="flex flex-wrap gap-2">
               {pronounOptions.map((pronoun) => (
                 <Button
                   key={pronoun}
                   type="button"
-                  variant={formData.pronouns === pronoun ? "default" : "outline"}
+                  variant={
+                    formData.pronouns === pronoun ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => handlePronounSelect(pronoun)}
                   className="text-sm"
@@ -343,11 +373,13 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
       {/* Save Button and Messages */}
       <div className="space-y-4">
         {uploadMessage && (
-          <div className={`p-3 rounded-lg text-sm ${
-            uploadMessage.includes("successfully") 
-              ? "bg-green-50 text-green-800 border border-green-200" 
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}>
+          <div
+            className={`p-3 rounded-lg text-sm ${
+              uploadMessage.includes("successfully")
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : "bg-red-50 text-red-800 border border-red-200"
+            }`}
+          >
             {uploadMessage}
           </div>
         )}
