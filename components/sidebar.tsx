@@ -3,17 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, Users, MessageCircle, Heart, LogOut, Menu, User } from "lucide-react";
+import {
+  Home,
+  Users,
+  MessageCircle,
+  Heart,
+  LogOut,
+  Menu,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const navigation = [
   { name: "Family Feed", href: "/protected", icon: Home },
+  { name: "Reminisce", href: "/protected/reminisce", icon: Heart },
   { name: "Family Tree", href: "/protected/family-tree", icon: Users },
   { name: "Chat with Family", href: "/protected/chatbot", icon: MessageCircle },
-  { name: "Reminisce", href: "/protected/reminisce", icon: Heart },
 ];
 
 export function Sidebar() {
@@ -59,9 +68,23 @@ export function Sidebar() {
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
+          {/* Header with Logo */}
           <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">Origins</h1>
+            <div className="flex items-center space-x-3">
+              <div className="rounded flex items-center justify-center">
+                <Image
+                  src="/originslogo.svg"
+                  alt="Origins Logo"
+                  width={28}
+                  height={28}
+                  className="w-6 h-6"
+                  onError={(e) => {
+                    console.log("Logo failed to load:", e);
+                  }}
+                />
+              </div>
+              <h1 className="text-xl font-bold text-gray-900">Origins</h1>
+            </div>
           </div>
 
           {/* Navigation */}

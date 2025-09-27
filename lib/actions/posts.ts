@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { extractPostContext } from "./context-extraction";
 
 export async function createPost(formData: FormData) {
   const supabase = await createClient();
@@ -101,6 +102,15 @@ export async function createPost(formData: FormData) {
 
     if (postError) throw postError;
 
+    // 🚀 AUTOMATIC CONTEXT EXTRACTION - Extract context for this new post
+    try {
+      await extractPostContext(post.id);
+      console.log(`✅ Automatically extracted context for post: ${post.id}`);
+    } catch (contextError) {
+      console.error("⚠️ Context extraction failed for post:", contextError);
+      // Don't fail the post creation if context extraction fails
+    }
+
     revalidatePath("/protected");
     return { success: true, post };
   } catch (error) {
@@ -164,6 +174,13 @@ export async function deletePost(postId: string) {
         }
       }
     }
+
+    // Delete associated context entries
+    await supabase
+      .from("user_context")
+      .delete()
+      .eq("source_type", "post")
+      .eq("source_id", postId);
 
     // Delete post reactions first (due to foreign key constraints)
     await supabase.from("post_reactions").delete().eq("post_id", postId);
