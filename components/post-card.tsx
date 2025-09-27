@@ -156,70 +156,35 @@ export function PostCard({ post }: PostCardProps) {
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="pt-0">
+        {/* Text Content */}
         {title && <h3 className="font-semibold text-gray-900 mb-2">{title}</h3>}
         <p className="text-gray-800 mb-4">{description}</p>
 
-        {/* Display Real Uploaded Images */}
+        {/* Images - Preserve aspect ratio, natural positioning */}
         {post.image_urls && post.image_urls.length > 0 && (
-          <div className="mb-4">
-            {post.image_urls.length === 1 ? (
-              // Single image - full width
-              <div className="relative aspect-video rounded-lg overflow-hidden">
-                <Image
-                  src={post.image_urls[0]}
-                  alt="Family photo"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
+          <div className="space-y-3">
+            {post.image_urls.map((imageUrl: string, index: number) => (
+              <div key={index} className="flex justify-start">
+                <div className="relative inline-block rounded-lg overflow-hidden max-w-full">
+                  <Image
+                    src={imageUrl}
+                    alt={`Family photo ${index + 1}`}
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    className="w-auto h-auto max-w-full max-h-96 object-contain"
+                    style={{ width: "auto", height: "auto" }}
+                  />
+                </div>
               </div>
-            ) : (
-              // Multiple images - grid layout
-              <div
-                className={`grid gap-2 rounded-lg overflow-hidden ${
-                  post.image_urls.length === 2
-                    ? "grid-cols-2"
-                    : post.image_urls.length === 3
-                    ? "grid-cols-2"
-                    : "grid-cols-2"
-                }`}
-              >
-                {post.image_urls
-                  .slice(0, 4)
-                  .map((imageUrl: string, index: number) => (
-                    <div
-                      key={index}
-                      className={`relative aspect-square ${
-                        post.image_urls.length === 3 && index === 0
-                          ? "row-span-2"
-                          : ""
-                      }`}
-                    >
-                      <Image
-                        src={imageUrl}
-                        alt={`Family photo ${index + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
-                      />
-                      {/* Show "+X more" overlay for 4+ images */}
-                      {index === 3 && post.image_urls.length > 4 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                          <span className="text-white font-semibold text-lg">
-                            +{post.image_urls.length - 4} more
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            )}
+            ))}
           </div>
         )}
 
         {/* Post Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-4">
           <div className="flex space-x-6">
             <form action={togglePostReaction.bind(null, post.id, "heart")}>
               <Button
