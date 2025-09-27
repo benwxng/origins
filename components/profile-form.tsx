@@ -205,6 +205,7 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
               className="placeholder:text-gray-500"
             />
           </div>
+
         </CardContent>
       </Card>
 
