@@ -30,9 +30,9 @@ export default async function ReminiscePage() {
     },
     {
       id: 2,
-      title: "Margaret's First Day of School",
+      title: "Margaret&apos;s First Day of School",
       description:
-        "She was so excited wearing her favorite blue dress with polka dots. She couldn't wait to learn to read.",
+        "She was so excited wearing her favorite blue dress with polka dots. She couldn&apos;t wait to learn to read.",
       date: "September 1, 1965",
       decade: "1960s",
       tags: ["childhood", "school", "milestone"],

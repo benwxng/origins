@@ -21,20 +21,20 @@ export default async function ChatbotPage() {
       id: 1,
       role: "assistant",
       content:
-        "Hello! I'm your family assistant. I have access to all your family memories, photos, and stories. What would you like to know about your family?",
+        "Hello! I&apos;m your family assistant. I have access to all your family memories, photos, and stories. What would you like to know about your family?",
       timestamp: "10:30 AM",
     },
     {
       id: 2,
       role: "user",
-      content: "Tell me about Eleanor's childhood memories",
+      content: "Tell me about Eleanor&apos;s childhood memories",
       timestamp: "10:32 AM",
     },
     {
       id: 3,
       role: "assistant",
       content:
-        "Eleanor has shared some beautiful childhood memories! She particularly loves talking about her first day of school when she wore her favorite blue dress with polka dots. She was so excited and couldn't wait to learn to read. She also remembers helping her mother in the garden and learning to bake cookies on Sunday afternoons.",
+        "Eleanor has shared some beautiful childhood memories! She particularly loves talking about her first day of school when she wore her favorite blue dress with polka dots. She was so excited and couldn&apos;t wait to learn to read. She also remembers helping her mother in the garden and learning to bake cookies on Sunday afternoons.",
       timestamp: "10:32 AM",
     },
     {
@@ -167,7 +167,7 @@ export default async function ChatbotPage() {
             <p className="text-sm text-gray-500 mb-2">Suggested questions:</p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" className="text-xs">
-                Tell me about Eleanor's wedding day
+                Tell me about Eleanor&apos;s wedding day
               </Button>
               <Button variant="outline" size="sm" className="text-xs">
                 What family recipes do we have?
@@ -176,7 +176,7 @@ export default async function ChatbotPage() {
                 Show me photos from the 1980s
               </Button>
               <Button variant="outline" size="sm" className="text-xs">
-                What are Margaret's favorite memories?
+                What are Margaret&apos;s favorite memories?
               </Button>
             </div>
           </div>

@@ -40,7 +40,7 @@ export default async function Index() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Origins is a familial knowledge base and reminisce therapy tool
             designed to help families stay connected and help those with
-            Alzheimer's remember their loved ones and engage with precious
+            Alzheimer&apos;s remember their loved ones and engage with precious
             memories.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -124,7 +124,7 @@ export default async function Index() {
         <Card className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
           <CardContent className="p-12 text-center">
             <h3 className="text-3xl font-bold mb-4">
-              Start Preserving Your Family's Story Today
+              Start Preserving Your Family&apos;s Story Today
             </h3>
             <p className="text-xl mb-8 opacity-90">
               Join families who are already using Origins to stay connected and
