@@ -30,7 +30,7 @@ export default async function FamilyFeedPage() {
           <p className="text-gray-600">Stay connected with your loved ones</p>
         </div>
         <CreatePostModal>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button className="bg-green-900 hover:bg-green-950">
             <Plus className="w-4 h-4 mr-2" />
             New Post
           </Button>

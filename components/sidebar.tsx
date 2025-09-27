@@ -52,7 +52,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-64 bg-white border border-gray-200 shadow-sm transform transition-transform duration-300 ease-in-out lg:translate-x-0 m-6 rounded-lg",
           isMobileMenuOpen
             ? "translate-x-0"
             : "-translate-x-full lg:translate-x-0"
@@ -75,7 +75,7 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                     isActive
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      ? "bg-green-50 text-green-900 border border-green-200"
                       : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
