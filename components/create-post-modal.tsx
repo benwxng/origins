@@ -41,7 +41,18 @@ export function CreatePostModal({ children }: CreatePostModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
+    console.log("📝 Modal handleSubmit called!");
+    console.log("📋 Form data:", {
+      title,
+      description,
+      postType,
+      imageCount: images.length,
+    });
+
+    if (!title.trim() || !description.trim()) {
+      console.log("❌ Form validation failed - missing title or description");
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -55,7 +66,9 @@ export function CreatePostModal({ children }: CreatePostModalProps) {
         formData.append(`image-${index}`, image);
       });
 
+      console.log("🚀 About to call createPost...");
       await createPost(formData);
+      console.log("✅ createPost completed successfully!");
 
       // Reset form
       setTitle("");
@@ -64,7 +77,7 @@ export function CreatePostModal({ children }: CreatePostModalProps) {
       setImages([]);
       setOpen(false);
     } catch (error) {
-      console.error("Error creating post:", error);
+      console.error("❌ Error creating post in modal:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -108,6 +121,7 @@ export function CreatePostModal({ children }: CreatePostModalProps) {
           <div className="space-y-2">
             <Label>Post Type</Label>
             <div className="flex gap-2">
+              <input type="hidden" name="postType" value={postType} />
               <Button
                 type="button"
                 variant={postType === "general" ? "default" : "outline"}
@@ -199,12 +213,8 @@ export function CreatePostModal({ children }: CreatePostModalProps) {
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!title.trim() || !description.trim() || isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isSubmitting ? "Sharing..." : "Share Post"}
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              Share Post
             </Button>
           </DialogFooter>
         </form>

@@ -18,15 +18,10 @@ export async function extractPostContext(postId?: string) {
   const supabase = await createClient();
 
   try {
-    let query = supabase.from("family_posts").select(`
-        *,
-        family_members!inner(
-          id,
-          user_id,
-          full_name,
-          relationship
-        )
-      `);
+    console.log(`🔍 Starting extractPostContext for postId: ${postId}`);
+
+    // Simple query - just get the post
+    let query = supabase.from("family_posts").select("*");
 
     if (postId) {
       query = query.eq("id", postId);
@@ -34,11 +29,44 @@ export async function extractPostContext(postId?: string) {
 
     const { data: posts, error } = await query;
 
-    if (error) throw error;
+    console.log(`📊 Found ${posts?.length || 0} posts for context extraction`);
 
-    const contextEntries: ContextEntry[] = [];
+    if (error) {
+      console.error("❌ Error in extractPostContext query:", error);
+      throw error;
+    }
 
-    for (const post of posts || []) {
+    if (!posts || posts.length === 0) {
+      console.log("❌ No posts found");
+      return { success: true, count: 0 };
+    }
+
+    // Get author info separately
+    const authorIds = posts.map((post) => post.author_id).filter(Boolean);
+    const { data: authors, error: authorError } = await supabase
+      .from("family_members")
+      .select("id, user_id, full_name, relationship")
+      .in("id", authorIds);
+
+    if (authorError) {
+      console.error("❌ Error fetching authors:", authorError);
+      throw authorError;
+    }
+
+    console.log(`👥 Found ${authors?.length || 0} authors`);
+
+    const contextEntries = [];
+
+    for (const post of posts) {
+      const author = authors?.find((a) => a.id === post.author_id);
+
+      if (!author) {
+        console.log(`⚠️ No author found for post ${post.id}`);
+        continue;
+      }
+
+      console.log(`📝 Processing post: ${post.id} by ${author.full_name}`);
+
       // Parse title and description from content
       const contentLines = post.content.split("\n\n");
       const title = contentLines[0] || "";
@@ -48,7 +76,7 @@ export async function extractPostContext(postId?: string) {
       const contextText = `
 Title: ${title}
 Description: ${description}
-Author: ${post.family_members.full_name} (${post.family_members.relationship})
+Author: ${author.full_name} (${author.relationship})
 Post Type: ${post.post_type}
 Date: ${new Date(post.created_at).toLocaleDateString()}
 ${
@@ -62,9 +90,9 @@ ${
       const metadata = {
         title,
         post_type: post.post_type,
-        date: post.created_at.split("T")[0], // YYYY-MM-DD format
-        author: post.family_members.full_name,
-        author_relationship: post.family_members.relationship,
+        date: post.created_at.split("T")[0],
+        author: author.full_name,
+        author_relationship: author.relationship,
         has_images: post.image_urls?.length > 0,
         image_count: post.image_urls?.length || 0,
         tags: extractTags(title + " " + description),
@@ -75,40 +103,43 @@ ${
         source_type: "post",
         source_id: post.id,
         metadata,
-        family_member_id: post.family_members.id,
-        user_id: post.family_members.user_id,
+        family_member_id: author.id,
+        user_id: author.user_id,
       });
     }
 
-    // Insert into user_context table and generate embeddings
+    console.log(`💾 Inserting ${contextEntries.length} context entries`);
+
+    // Insert into user_context table
     for (const entry of contextEntries) {
+      console.log(`💾 Inserting context for post ${entry.source_id}`);
+
       const { data: insertedContext, error: insertError } = await supabase
         .from("user_context")
-        .upsert(
-          {
-            user_id: entry.user_id,
-            family_member_id: entry.family_member_id,
-            raw_text: entry.raw_text,
-            source_type: entry.source_type,
-            source_id: entry.source_id,
-            metadata: entry.metadata,
-          },
-          {
-            onConflict: "source_type,source_id",
-            ignoreDuplicates: false,
-          }
-        )
+        .insert({
+          user_id: entry.user_id,
+          family_member_id: entry.family_member_id,
+          raw_text: entry.raw_text,
+          source_type: entry.source_type,
+          source_id: entry.source_id,
+          metadata: entry.metadata,
+        })
         .select("id")
         .single();
 
       if (insertError) {
-        console.error("Error inserting post context:", insertError);
+        console.error("❌ Error inserting post context:", insertError);
         continue;
       }
+
+      console.log(`✅ Inserted context entry: ${insertedContext?.id}`);
 
       // 🚀 AUTO-GENERATE EMBEDDING for new context
       if (insertedContext) {
         try {
+          console.log(
+            `🧠 Generating embedding for context: ${insertedContext.id}`
+          );
           await generateContextEmbedding(insertedContext.id, "user_context");
           console.log(
             `✅ Generated embedding for post context: ${insertedContext.id}`
@@ -120,10 +151,10 @@ ${
       }
     }
 
-    console.log(`Extracted context from ${contextEntries.length} posts`);
+    console.log(`✅ Extracted context from ${contextEntries.length} posts`);
     return { success: true, count: contextEntries.length };
   } catch (error) {
-    console.error("Error extracting post context:", error);
+    console.error("❌ Error extracting post context:", error);
     throw error;
   }
 }

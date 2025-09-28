@@ -6,12 +6,18 @@ import { redirect } from "next/navigation";
 import { extractPostContext } from "./context-extraction";
 
 export async function createPost(formData: FormData) {
+  // This should show in server logs
+  console.log("🚀 SERVER ACTION: createPost function called!");
+  console.log("📊 SERVER: FormData entries:", Array.from(formData.entries()));
+
   const supabase = await createClient();
 
   // Check if user is authenticated
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  console.log("👤 SERVER: User authenticated:", user?.id);
 
   if (!user) {
     redirect("/auth/login");
@@ -20,6 +26,8 @@ export async function createPost(formData: FormData) {
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const postType = formData.get("postType") as string;
+
+  console.log("📝 SERVER: Post data:", { title, description, postType });
 
   if (!title || !description) {
     throw new Error("Title and description are required");
@@ -102,7 +110,17 @@ export async function createPost(formData: FormData) {
 
     if (postError) throw postError;
 
+    console.log("✅ Post created successfully:", post.id);
+
     // 🚀 AUTOMATIC CONTEXT EXTRACTION - Extract context for this new post
+    console.log(`🔄 Starting context extraction for post: ${post.id}`);
+
+    // Test if the import works
+    console.log(
+      "🧪 Testing extractPostContext import:",
+      typeof extractPostContext
+    );
+
     try {
       await extractPostContext(post.id);
       console.log(`✅ Automatically extracted context for post: ${post.id}`);
@@ -112,7 +130,7 @@ export async function createPost(formData: FormData) {
     }
 
     revalidatePath("/protected");
-    return { success: true, post };
+    // Don't return anything for form actions
   } catch (error) {
     console.error("Error creating post:", error);
     throw error;
