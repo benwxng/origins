@@ -207,31 +207,62 @@ export async function deletePost(postId: string) {
 export async function getPosts() {
   const supabase = await createClient();
 
+  // Simple query - just get all posts
   const { data: posts, error } = await supabase
     .from("family_posts")
-    .select(
-      `
-      *,
-      family_members!inner(
-        full_name,
-        relationship,
-        avatar_url,
-        user_id
-      )
-    `
-    )
+    .select("*")
     .order("created_at", { ascending: false });
 
-  console.log("getPosts - Raw data:", posts); // Debug log
-  console.log("getPosts - Error:", error); // Debug log
-  console.log("getPosts - Count:", posts?.length || 0); // Debug log
+  console.log("getPosts - Raw posts:", posts);
+  console.log("getPosts - Error:", error);
 
   if (error) {
     console.error("Error fetching posts:", error);
     return [];
   }
 
-  return posts || [];
+  if (!posts || posts.length === 0) {
+    console.log("No posts found in database");
+    return [];
+  }
+
+  // Get family member info separately
+  const authorIds = posts.map((post) => post.author_id).filter(Boolean);
+  const { data: authors, error: authorError } = await supabase
+    .from("family_members")
+    .select("id, full_name, relationship, avatar_url, user_id")
+    .in("id", authorIds);
+
+  if (authorError) {
+    console.error("Error fetching authors:", authorError);
+    // Return posts without author info rather than failing
+    return posts.map((post) => ({
+      ...post,
+      family_members: {
+        full_name: "Unknown",
+        relationship: "member",
+        avatar_url: null,
+        user_id: null,
+      },
+    }));
+  }
+
+  // Combine posts with author info
+  const postsWithAuthors = posts.map((post) => {
+    const author = authors?.find((a) => a.id === post.author_id);
+    return {
+      ...post,
+      family_members: {
+        full_name: author?.full_name || "Unknown",
+        relationship: author?.relationship || "member",
+        avatar_url: author?.avatar_url || null,
+        user_id: author?.user_id || null,
+      },
+    };
+  });
+
+  console.log("getPosts - Final result:", postsWithAuthors);
+  return postsWithAuthors;
 }
 
 export async function getPostReactions(postId: string) {

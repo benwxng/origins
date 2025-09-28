@@ -85,7 +85,7 @@ export default async function ReminiscePage() {
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {memoryPrompts.map((prompt, index) => (
               <CreateMemoryModal
                 key={index}
@@ -94,10 +94,10 @@ export default async function ReminiscePage() {
               >
                 <Button
                   variant="outline"
-                  className="h-auto p-4 text-left justify-start bg-white hover:bg-purple-50 border-purple-200"
+                  className="h-auto p-4 text-left justify-start bg-white hover:bg-purple-50 border-purple-200 w-full"
                 >
                   <Play className="w-4 h-4 mr-3 text-purple-600 flex-shrink-0" />
-                  <span className="text-sm">{prompt}</span>
+                  <span className="text-sm leading-relaxed">{prompt}</span>
                 </Button>
               </CreateMemoryModal>
             ))}
