@@ -18,23 +18,38 @@ export async function updateProfile(formData: any, avatarFile: File | null) {
     let avatarUrl = formData.avatar_url;
 
     // Handle avatar upload if a new file is provided
-    if (avatarFile) {
+    if (avatarFile || formData.avatar_base64) {
       try {
-        const fileExt = avatarFile.name.split(".").pop();
+        let fileToUpload: File;
+        
+        if (formData.avatar_base64) {
+          // Convert base64 to File object
+          const base64Data = formData.avatar_base64.split(',')[1];
+          const binaryData = atob(base64Data);
+          const bytes = new Uint8Array(binaryData.length);
+          for (let i = 0; i < binaryData.length; i++) {
+            bytes[i] = binaryData.charCodeAt(i);
+          }
+          fileToUpload = new File([bytes], formData.avatar_filename, { type: formData.avatar_type });
+        } else {
+          fileToUpload = avatarFile!;
+        }
+
+        const fileExt = fileToUpload.name.split(".").pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
         const filePath = fileName; // Upload directly to bucket root, not in a subfolder
 
         console.log('Attempting to upload avatar file...', { 
           fileName, 
           filePath, 
-          fileSize: avatarFile.size, 
-          fileType: avatarFile.type 
+          fileSize: fileToUpload.size, 
+          fileType: fileToUpload.type 
         });
         
         // Try to upload the file directly - if bucket doesn't exist, we'll get a clear error
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("avatars")
-          .upload(filePath, avatarFile);
+          .upload(filePath, fileToUpload);
 
         if (uploadError) {
           console.error('Upload error details:', {
@@ -76,7 +91,7 @@ export async function updateProfile(formData: any, avatarFile: File | null) {
         id: user.id,
         full_name: formData.full_name,
         username: formData.username,
-        phone: formData.phone || null,
+        phone_number: formData.phone || null,
         location: formData.location || null,
         pronouns: formData.pronouns || null,
         bio: formData.bio || null,

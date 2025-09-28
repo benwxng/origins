@@ -250,15 +250,19 @@ export async function getPosts() {
   // Combine posts with author info
   const postsWithAuthors = posts.map((post) => {
     const author = authors?.find((a) => a.id === post.author_id);
-    return {
+    console.log("Processing post:", post.id, "Author:", author);
+    const result = {
       ...post,
       family_members: {
+        id: author?.id || null, // Add the family member ID
         full_name: author?.full_name || "Unknown",
         relationship: author?.relationship || "member",
         avatar_url: author?.avatar_url || null,
         user_id: author?.user_id || null,
       },
     };
+    console.log("Post result:", result);
+    return result;
   });
 
   console.log("getPosts - Final result:", postsWithAuthors);

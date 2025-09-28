@@ -8,7 +8,9 @@ import Link from "next/link";
 import { getInitials } from "@/lib/utils/display";
 import { getUserRelationships, getRelationshipBetweenUsers } from "@/lib/actions/relationships";
 import { formatRelationshipType } from "@/lib/utils/relationships";
-import { AddRelationshipDropdown } from "@/components/add-relationship-dropdown";
+import { EditFamilyMemberModal } from "@/components/edit-family-member-modal";
+import { ParentAssignmentDropdown } from "@/components/parent-assignment-dropdown";
+import { ParentRelationshipsDisplay } from "@/components/parent-relationships-display";
 
 interface ProfileViewPageProps {
   params: {
@@ -27,19 +29,59 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
     return redirect("/auth/login");
   }
 
-  // Fetch the profile data for the requested user
-  const { data: profile, error } = await supabase
-    .from("profiles")
+  console.log("ProfileViewPage - Requested userId:", params.userId);
+  console.log("ProfileViewPage - Current user ID:", currentUser.id);
+
+  // First, try to get the family member data using the ID
+  const { data: familyMember, error: familyMemberError } = await supabase
+    .from("family_members")
     .select("*")
     .eq("id", params.userId)
     .single();
 
-  if (error || !profile) {
+  console.log("Family member query result:", familyMember);
+  console.log("Family member query error:", familyMemberError);
+
+  let profile = null;
+  let error = null;
+
+  // If this family member has a user_id, try to get their profile
+  if (familyMember && familyMember.user_id) {
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", familyMember.user_id)
+      .single();
+    
+    profile = userProfile;
+    error = profileError;
+    console.log("Profile query result:", profile);
+    console.log("Profile query error:", error);
+  }
+
+  // If profile doesn't exist, use family member data
+  let userInfo = null;
+  if ((error || !profile) && familyMember) {
+    console.log("Profile not found, using family member data");
+    userInfo = {
+      id: familyMember.user_id || params.userId, // Use user_id if available, otherwise use family member ID
+      full_name: familyMember.full_name || "Family Member",
+      username: familyMember.full_name?.toLowerCase().replace(/\s+/g, "") || "family-member",
+      avatar_url: familyMember.avatar_url,
+      bio: null,
+      location: null,
+      phone_number: null,
+      pronouns: null,
+    };
+    console.log("Created userInfo from family_members:", userInfo);
+  }
+
+  if (!familyMember) {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h1>
-          <p className="text-gray-600 mb-6">The profile you're looking for doesn't exist or you don't have permission to view it.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Profile Not Found</h1>
+          <p className="text-muted-foreground mb-6">The profile you're looking for doesn't exist or you don't have permission to view it.</p>
           <Link href="/protected">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -51,18 +93,50 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
     );
   }
 
-  // Get user data for additional info
-  const { data: userData } = await supabase.auth.admin.getUserById(params.userId);
+  // Use profile if available, otherwise use userInfo
+  const displayProfile = profile || userInfo;
 
-  const isOwnProfile = currentUser.id === params.userId;
+  // Get user data for additional info (only if this is an authenticated user)
+  let userData = null;
+  if (familyMember && familyMember.user_id) {
+    const { data: userDataResult } = await supabase.auth.admin.getUserById(familyMember.user_id);
+    userData = userDataResult;
+  }
 
-  // Get relationships for this user
-  const relationships = await getUserRelationships(params.userId);
+  const isOwnProfile = familyMember && familyMember.user_id === currentUser.id;
+
+  // Get relationships for this family member
+  let relationships = [];
+  if (familyMember.user_id) {
+    // If this family member has a user_id, get their relationships
+    console.log("Getting relationships for authenticated user:", familyMember.user_id);
+    relationships = await getUserRelationships(familyMember.user_id);
+    console.log("Relationships for authenticated user:", relationships);
+  } else {
+    // If no user_id, get relationships using the family member ID directly
+    console.log("Getting relationships for non-authenticated family member:", familyMember.id);
+    const supabase = await createClient();
+    const { data: familyRelationships, error: relationshipsError } = await supabase
+      .from("family_relationships")
+      .select(`
+        *,
+        related_person:family_members!family_relationships_related_person_id_fkey(
+          id, full_name, relationship, avatar_url, user_id
+        )
+      `)
+      .eq("person_id", familyMember.id);
+    
+    console.log("Family relationships query result:", familyRelationships);
+    console.log("Family relationships query error:", relationshipsError);
+    relationships = familyRelationships || [];
+  }
+  
+  console.log("Final relationships array:", relationships);
   
   // Get the relationship between current user and viewed user (if not own profile)
   let currentUserRelationship = null;
-  if (!isOwnProfile) {
-    currentUserRelationship = await getRelationshipBetweenUsers(currentUser.id, params.userId);
+  if (!isOwnProfile && familyMember.user_id) {
+    currentUserRelationship = await getRelationshipBetweenUsers(currentUser.id, familyMember.user_id);
   }
 
   return (
@@ -75,48 +149,64 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
             Back to Family Feed
           </Button>
         </Link>
-        {isOwnProfile && (
-          <Link href="/protected/profile">
-            <Button>Edit Profile</Button>
-          </Link>
-        )}
+        <div className="flex space-x-2">
+          {isOwnProfile && (
+            <Link href="/protected/profile">
+              <Button>Edit Profile</Button>
+            </Link>
+          )}
+          {!isOwnProfile && !familyMember.user_id && (
+            <EditFamilyMemberModal 
+              memberId={familyMember.id}
+              currentData={{
+                full_name: familyMember.full_name,
+                bio: familyMember.bio,
+                phone_number: familyMember.phone_number,
+                pronouns: familyMember.pronouns,
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* Profile Header */}
-      <Card className="bg-white shadow-sm mb-6">
+      <Card className="bg-card shadow-sm border-border mb-6">
         <CardHeader className="text-center pb-4">
-          <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            {profile.avatar_url ? (
+          <div className="w-32 h-32 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            {displayProfile.avatar_url ? (
               <img
-                src={profile.avatar_url}
+                src={displayProfile.avatar_url}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover"
               />
             ) : (
-              <span className="text-gray-600 font-semibold text-2xl">
-                {getInitials(profile.full_name || "User")}
+              <span className="text-muted-foreground font-semibold text-2xl">
+                {getInitials(displayProfile.full_name || "User")}
               </span>
             )}
           </div>
-          <CardTitle className="text-2xl text-gray-900">
-            {profile.full_name || "No name provided"}
+          <CardTitle className="text-2xl text-card-foreground">
+            {displayProfile.full_name || "No name provided"}
           </CardTitle>
-          <p className="text-gray-700 text-lg">
-            @{profile.username || "no-username"}
+          <p className="text-muted-foreground text-lg">
+            @{displayProfile.username || "no-username"}
           </p>
           <div className="flex flex-wrap gap-2 justify-center mt-3">
             {currentUserRelationship && (
-              <Badge variant="outline" className="border-blue-200 text-blue-700">
+              <Badge variant="outline" className="border-primary/20 text-primary">
                 Your {formatRelationshipType(currentUserRelationship.relationship_type)}
                 {currentUserRelationship.is_inferred && " (inferred)"}
               </Badge>
             )}
           </div>
           
-          {/* Add Relationship Dropdown */}
+          {/* Add Parent Relationship Dropdown */}
           {!isOwnProfile && !currentUserRelationship && (
             <div className="mt-4 max-w-sm mx-auto">
-              <AddRelationshipDropdown currentUserId={currentUser.id} />
+              <ParentAssignmentDropdown 
+                currentUserId={currentUser.id} 
+                targetFamilyMemberId={familyMember.id}
+              />
             </div>
           )}
         </CardHeader>
@@ -124,9 +214,9 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
 
       {/* Relationships Section */}
       {relationships.length > 0 && (
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="bg-card shadow-sm border-border mb-6">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold text-card-foreground flex items-center gap-2">
               <Users className="w-5 h-5" />
               Family Relationships
             </CardTitle>
@@ -139,8 +229,8 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
                   href={`/protected/profile/${rel.person_b.id}`}
                   className="block"
                 >
-                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                    <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
                       {rel.person_b.avatar_url ? (
                         <img
                           src={rel.person_b.avatar_url}
@@ -148,13 +238,13 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
-                        <span className="text-gray-600 font-semibold text-sm">
+                        <span className="text-muted-foreground font-semibold text-sm">
                           {getInitials(rel.person_b.full_name)}
                         </span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
+                      <p className="font-medium text-card-foreground truncate">
                         {rel.person_b.full_name}
                       </p>
                       <div className="flex items-center gap-2">
@@ -162,7 +252,7 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
                           {formatRelationshipType(rel.relationship_type)}
                         </Badge>
                         {rel.is_inferred && (
-                          <span className="text-xs text-gray-500">inferred</span>
+                          <span className="text-xs text-muted-foreground">inferred</span>
                         )}
                       </div>
                     </div>
@@ -174,60 +264,67 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
         </Card>
       )}
 
+      {/* Parent Relationships */}
+      <ParentRelationshipsDisplay 
+        familyMemberId={familyMember.id} 
+        isOwnProfile={isOwnProfile}
+        canEdit={!familyMember.user_id}
+      />
+
       {/* Profile Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Basic Information */}
         <Card className="bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">Basic Information</CardTitle>
+            <CardTitle className="text-lg font-semibold text-card-foreground">Basic Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {profile.pronouns && (
+            {displayProfile.pronouns && (
               <div className="flex items-center space-x-3">
-                <User className="w-5 h-5 text-gray-400" />
+                <User className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-gray-600">Pronouns</p>
-                  <p className="font-medium text-gray-900">{profile.pronouns}</p>
+                  <p className="text-sm text-muted-foreground">Pronouns</p>
+                  <p className="font-medium text-card-foreground">{displayProfile.pronouns}</p>
                 </div>
               </div>
             )}
             
-            {profile.location && (
+            {displayProfile.location && (
               <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
+                <MapPin className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-gray-600">Location</p>
-                  <p className="font-medium text-gray-900">{profile.location}</p>
+                  <p className="text-sm text-muted-foreground">Location</p>
+                  <p className="font-medium text-card-foreground">{displayProfile.location}</p>
                 </div>
               </div>
             )}
 
-            {profile.phone && (
+            {displayProfile.phone_number && (
               <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-gray-400" />
+                <Phone className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-medium text-gray-900">{profile.phone}</p>
+                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium text-card-foreground">{displayProfile.phone_number}</p>
                 </div>
               </div>
             )}
 
             {userData?.user?.email && (
               <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-gray-400" />
+                <Mail className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium text-gray-900">{userData.user.email}</p>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium text-card-foreground">{userData.user.email}</p>
                 </div>
               </div>
             )}
 
             <div className="flex items-center space-x-3">
-              <Calendar className="w-5 h-5 text-gray-400" />
+              <Calendar className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Member since</p>
-                <p className="font-medium text-gray-900">
-                  {new Date(profile.created_at).toLocaleDateString()}
+                <p className="text-sm text-muted-foreground">Member since</p>
+                <p className="font-medium text-card-foreground">
+                  {new Date(displayProfile.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -237,13 +334,13 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
         {/* Bio */}
         <Card className="bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">About</CardTitle>
+            <CardTitle className="text-lg font-semibold text-card-foreground">About</CardTitle>
           </CardHeader>
           <CardContent>
-            {profile.bio ? (
-              <p className="text-gray-700 leading-relaxed">{profile.bio}</p>
+            {displayProfile.bio ? (
+              <p className="text-foreground leading-relaxed">{displayProfile.bio}</p>
             ) : (
-              <p className="text-gray-500 italic">No bio provided yet.</p>
+              <p className="text-muted-foreground italic">No bio provided yet.</p>
             )}
           </CardContent>
         </Card>

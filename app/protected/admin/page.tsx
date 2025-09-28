@@ -84,8 +84,8 @@ export default async function AdminPage() {
               </div>
               <p className="text-gray-600">User Context Entries</p>
             </div>
-            <div className="text-center p-6 bg-green-50 rounded-lg">
-              <div className="text-3xl font-bold text-green-600 mb-2">
+            <div className="text-center p-6 bg-muted rounded-lg">
+              <div className="text-3xl font-bold text-muted-foreground mb-2">
                 {familyContextCount || 0}
               </div>
               <p className="text-gray-600">Family Context Entries</p>
@@ -176,7 +176,7 @@ export default async function AdminPage() {
       </Card>
 
       {/* Next Steps */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+      <Card className="bg-muted">
         <CardHeader>
           <h2 className="text-xl font-semibold text-gray-900">
             Step 3: Ready for FamilyGPT

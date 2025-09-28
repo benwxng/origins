@@ -20,7 +20,7 @@ export async function getUserDisplayInfo(user: any) {
     username: profile?.username || user.email?.split("@")[0] || "username",
     avatarUrl: profile?.avatar_url || null,
     email: user.email || "",
-    phone: profile?.phone || null,
+    phone: profile?.phone_number || null,
     location: profile?.location || null,
     pronouns: profile?.pronouns || null,
     bio: profile?.bio || null,

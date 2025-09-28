@@ -157,7 +157,7 @@ export default async function ReminiscePage() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
-            <Users className="w-6 h-6 mr-3 text-green-600" />
+            <Users className="w-6 h-6 mr-3 text-muted-foreground" />
             All Family Memories ({memories.length})
           </h2>
         </div>
@@ -193,10 +193,10 @@ export default async function ReminiscePage() {
       </div>
 
       {/* Memory Activity Stats */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+      <Card className="bg-muted">
         <CardHeader>
           <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
-            <Users className="w-6 h-6 mr-3 text-green-600" />
+            <Users className="w-6 h-6 mr-3 text-muted-foreground" />
             Memory Activity
           </h2>
           <p className="text-gray-600">
@@ -206,7 +206,7 @@ export default async function ReminiscePage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">
+              <div className="text-3xl font-bold text-muted-foreground mb-2">
                 {memories.length}
               </div>
               <p className="text-gray-600">Total Memories</p>
