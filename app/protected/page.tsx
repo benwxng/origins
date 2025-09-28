@@ -38,7 +38,7 @@ export default async function FamilyFeedPage() {
   const posts = (await getPosts()) as Post[];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 bg-yellow-100 min-h-screen p-6">
       {/* Header with Post Button - Aligned with sidebar title */}
       <div className="flex items-center justify-between py-4 pt-6">
         <div>
