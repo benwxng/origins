@@ -23,8 +23,8 @@ const navigation = [
   { name: "Home", href: "/protected", icon: Home },
   { name: "Reminisce", href: "/protected/reminisce", icon: Heart },
   { name: "Chat", href: "/protected/chatbot", icon: MessageCircle },
-  { name: "Family Members", href: "/protected/family-members", icon: UserPlus },
   { name: "Family Tree", href: "/protected/family-tree", icon: Users },
+  { name: "Family Members", href: "/protected/family-members", icon: UserPlus },
 ];
 
 export function Sidebar() {

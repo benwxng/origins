@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { extractMemoryContext } from "./context-extraction";
+import { geminiModel } from "@/lib/gemini";
 
 export async function createMemory(formData: FormData) {
   const supabase = await createClient();
@@ -236,6 +237,37 @@ export async function deleteMemory(memoryId: string) {
     return { success: true };
   } catch (error) {
     console.error("Error deleting memory:", error);
+    throw error;
+  }
+}
+
+export async function generateMemoryPrompts() {
+  try {
+    const systemPrompt = `You are a memory prompt generator for a family reminiscence app. Generate exactly 6 thoughtful, engaging memory prompts that help people recall and share meaningful life experiences.
+
+Requirements:
+- Each prompt should be a question that sparks specific memories
+- Focus on universal life experiences (childhood, relationships, work, travel, traditions, etc.)
+- Keep prompts warm, personal, and accessible to all ages
+- Vary the topics to cover different life stages and experiences
+- Make them conversational and inviting
+- Each prompt should be 5-15 words long
+
+Return only the 6 prompts, one per line, without numbering or bullet points.`;
+
+    const result = await geminiModel.generateContent(systemPrompt);
+    const response = result.response.text().trim();
+
+    // Split the response into individual prompts and clean them up
+    const prompts = response
+      .split("\n")
+      .map((prompt) => prompt.trim())
+      .filter((prompt) => prompt.length > 0)
+      .slice(0, 6); // Ensure we only get 6 prompts
+
+    return { success: true, prompts };
+  } catch (error) {
+    console.error("Error generating memory prompts:", error);
     throw error;
   }
 }

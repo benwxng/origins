@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Bot, User, Send, Trash2 } from "lucide-react";
+import { Bot, User, Send, Trash2, Heart } from "lucide-react";
 import { sendFamilyGPTMessage } from "@/lib/actions/familygpt";
 
 interface Message {
@@ -134,7 +134,7 @@ export function FamilyGPTChat({
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
           <div className="text-center py-12">
-            <Bot className="w-16 h-16 text-purple-300 mx-auto mb-4" />
+            <Heart className="w-16 h-16 text-red-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-700 mb-2">
               Welcome to FamilyGPT!
             </h3>
