@@ -117,12 +117,18 @@ ${
       const { data: insertedContext, error: insertError } = await supabase
         .from("family_context")
         .insert({
-          raw_text: entry.raw_text,
-          source_type: entry.source_type,
-          source_id: entry.source_id,
-          metadata: entry.metadata,
-          created_by: entry.family_member_id,
-        })
+            raw_text: entry.raw_text,
+            source_type: entry.source_type,
+            source_id: entry.source_id,
+            metadata: entry.metadata,
+            created_by: entry.family_member_id,
+          }
+          }
+            created_by: entry.family_member_id,
+          }
+          }
+          }
+          
         .select("id")
         .single();
 
@@ -241,12 +247,16 @@ ${
       const { data: insertedContext, error: insertError } = await supabase
         .from("family_context")
         .insert({
-          raw_text: entry.raw_text,
-          source_type: entry.source_type,
-          source_id: entry.source_id,
-          metadata: entry.metadata,
-          created_by: entry.family_member_id,
-        })
+            raw_text: entry.raw_text,
+            source_type: entry.source_type,
+            source_id: entry.source_id,
+            metadata: entry.metadata,
+            created_by: entry.family_member_id,
+          }
+          }
+            created_by: entry.family_member_id,
+          }
+          }
         .select("id")
         .single();
 
@@ -342,9 +352,8 @@ Profile created: ${new Date(member.created_at).toLocaleDateString()}
             source_id: entry.source_id,
             metadata: entry.metadata,
             created_by: entry.family_member_id,
-          })
-          .select("id")
-          .single();
+          }
+          }
 
         if (insertError) {
           console.error("Error inserting profile context:", insertError);
@@ -354,10 +363,7 @@ Profile created: ${new Date(member.created_at).toLocaleDateString()}
         // 🚀 AUTO-GENERATE EMBEDDING for new context
         if (insertedContext) {
           try {
-            await generateContextEmbedding(
-              insertedContext.id,
-              "family_context"
-            );
+            await generateContextEmbedding(insertedContext.id, "family_context");
             console.log(
               `✅ Generated embedding for profile context: ${insertedContext.id}`
             );

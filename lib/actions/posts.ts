@@ -195,7 +195,7 @@ export async function deletePost(postId: string) {
 
     // Delete associated context entries
     await supabase
-      .from("user_context")
+      .from("family_context")
       .delete()
       .eq("source_type", "post")
       .eq("source_id", postId);

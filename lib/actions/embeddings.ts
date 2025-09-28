@@ -10,9 +10,9 @@ export async function generateAllEmbeddings() {
   try {
     console.log("🚀 Starting embedding generation...");
 
-    // Get all user_context entries without embeddings
+    // Get all family_context entries without embeddings
     const { data: userContexts, error: userError } = await supabase
-      .from("user_context")
+      .from("family_context")
       .select("id, raw_text")
       .is("embedding", null)
       .limit(100); // Process in batches to avoid rate limits
@@ -47,7 +47,7 @@ export async function generateAllEmbeddings() {
           const embedding = await generateEmbedding(context.raw_text);
 
           const { error: updateError } = await supabase
-            .from("user_context")
+            .from("family_context")
             .update({ embedding })
             .eq("id", context.id);
 
@@ -128,7 +128,7 @@ export async function generateAllEmbeddings() {
 // Generate embedding for a single new context entry
 export async function generateContextEmbedding(
   contextId: string,
-  contextType: "user_context" | "family_context"
+  contextType: "family_context" | "family_context"
 ) {
   const supabase = await createClient();
 
@@ -178,7 +178,7 @@ export async function searchSimilarContext(query: string, limit: number = 5) {
 
     // Search user contexts
     const { data: userResults, error: userError } = await supabase.rpc(
-      "search_user_context",
+      "search_family_context",
       {
         query_embedding: queryEmbedding,
         similarity_threshold: 0.7,

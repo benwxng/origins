@@ -66,8 +66,8 @@ export async function sendFamilyGPTMessage(sessionId: string, message: string) {
       "search_family_context",
       {
         query_embedding: queryEmbedding,
-        similarity_threshold: 0.3, // Lower threshold for more results
-        match_count: 8,
+        similarity_threshold: 0.3, // Lowered from 0.6 for more results
+        match_count: 12, // Increased from 8 for more context
       }
     );
 

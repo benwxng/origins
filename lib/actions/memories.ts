@@ -219,7 +219,7 @@ export async function deleteMemory(memoryId: string) {
 
     // Delete associated context entries
     await supabase
-      .from("user_context")
+      .from("family_context")
       .delete()
       .eq("source_type", "memory")
       .eq("source_id", memoryId);

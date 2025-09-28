@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Bot, User, Send } from "lucide-react";
+import { Bot, User, Send, Trash2 } from "lucide-react";
 import { sendFamilyGPTMessage } from "@/lib/actions/familygpt";
 
 interface Message {
@@ -34,6 +34,16 @@ export function FamilyGPTChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleClearChat = () => {
+    if (
+      confirm(
+        "Are you sure you want to clear the chat history? This will only clear what you see, not the saved conversation."
+      )
+    ) {
+      setMessages([]);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +105,31 @@ export function FamilyGPTChat({
 
   return (
     <>
+      {/* Header with Clear Button */}
+      <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Family Assistant
+          </h2>
+          <p className="text-sm text-gray-500">
+            {messages.length > 0
+              ? `${messages.length} messages`
+              : "Start a conversation"}
+          </p>
+        </div>
+        {messages.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearChat}
+            className="text-gray-500 hover:text-red-600"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Clear Chat
+          </Button>
+        )}
+      </div>
+
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
@@ -104,7 +139,7 @@ export function FamilyGPTChat({
               Welcome to FamilyGPT!
             </h3>
             <p className="text-gray-500 mb-6">
-              I know about your family's memories, posts, and stories. What
+              I know about your family&apos;s memories, posts, and stories. What
               would you like to know?
             </p>
             <div className="flex flex-wrap gap-2 justify-center max-w-2xl mx-auto">
