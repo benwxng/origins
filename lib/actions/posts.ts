@@ -248,7 +248,7 @@ export async function getPosts() {
   const authorIds = posts.map((post) => post.author_id).filter(Boolean);
   const { data: authors, error: authorError } = await supabase
     .from("family_members")
-    .select("id, full_name, relationship, avatar_url, user_id")
+    .select("id, full_name, relationship, user_id")
     .in("id", authorIds);
 
   if (authorError) {
@@ -265,6 +265,26 @@ export async function getPosts() {
     }));
   }
 
+  // Get avatar URLs from family_members table for users
+  const userIds = authors?.map(author => author.user_id).filter(Boolean) || [];
+  let profileAvatars: { [key: string]: string } = {};
+  
+  if (userIds.length > 0) {
+    const { data: familyMembers } = await supabase
+      .from("family_members")
+      .select("user_id, avatar_url")
+      .in("user_id", userIds);
+    
+    if (familyMembers) {
+      profileAvatars = familyMembers.reduce((acc, member) => {
+        if (member.avatar_url && member.user_id) {
+          acc[member.user_id] = member.avatar_url;
+        }
+        return acc;
+      }, {} as { [key: string]: string });
+    }
+  }
+
   // Combine posts with author info
   const postsWithAuthors = posts.map((post) => {
     const author = authors?.find((a) => a.id === post.author_id);
@@ -275,7 +295,7 @@ export async function getPosts() {
         id: author?.id || null, // Add the family member ID
         full_name: author?.full_name || "Unknown",
         relationship: author?.relationship || "member",
-        avatar_url: author?.avatar_url || null,
+        avatar_url: author?.user_id ? profileAvatars[author.user_id] || null : null,
         user_id: author?.user_id || null,
       },
     };

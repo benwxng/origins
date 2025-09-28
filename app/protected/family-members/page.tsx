@@ -125,7 +125,6 @@ export default async function FamilyMembersPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground">{member.full_name}</h3>
-                        <p className="text-sm text-muted-foreground">{member.relationship}</p>
                       </div>
                     </Link>
                     <Badge variant="secondary" className="bg-primary/10 text-primary">
@@ -183,7 +182,6 @@ export default async function FamilyMembersPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground">{member.full_name}</h3>
-                        <p className="text-sm text-muted-foreground">{member.relationship}</p>
                       </div>
                     </Link>
                     <Badge variant="outline" className="bg-muted">

@@ -80,14 +80,14 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
 
       const avatarUrl = urlData.publicUrl;
 
-      // Update the profile with the new avatar URL
+      // Update the family member with the new avatar URL
       const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: currentUser.id,
+        .from("family_members")
+        .update({
           avatar_url: avatarUrl,
           updated_at: new Date().toISOString(),
-        });
+        })
+        .eq("user_id", currentUser.id);
 
       if (profileError) {
         throw new Error(`Failed to update profile: ${profileError.message}`);

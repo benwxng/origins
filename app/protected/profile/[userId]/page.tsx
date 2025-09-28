@@ -200,69 +200,9 @@ export default async function ProfileViewPage({ params }: ProfileViewPageProps) 
             )}
           </div>
           
-          {/* Add Parent Relationship Dropdown */}
-          {!isOwnProfile && !currentUserRelationship && (
-            <div className="mt-4 max-w-sm mx-auto">
-              <ParentAssignmentDropdown 
-                currentUserId={currentUser.id} 
-                targetFamilyMemberId={familyMember.id}
-              />
-            </div>
-          )}
         </CardHeader>
       </Card>
 
-      {/* Relationships Section */}
-      {relationships.length > 0 && (
-        <Card className="bg-card shadow-sm border-border mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-card-foreground flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Family Relationships
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {relationships.map((rel: any) => (
-                <Link
-                  key={rel.id}
-                  href={`/protected/profile/${rel.person_b.id}`}
-                  className="block"
-                >
-                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted transition-colors">
-                    <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                      {rel.person_b.avatar_url ? (
-                        <img
-                          src={rel.person_b.avatar_url}
-                          alt="Profile"
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-muted-foreground font-semibold text-sm">
-                          {getInitials(rel.person_b.full_name)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-card-foreground truncate">
-                        {rel.person_b.full_name}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {formatRelationshipType(rel.relationship_type)}
-                        </Badge>
-                        {rel.is_inferred && (
-                          <span className="text-xs text-muted-foreground">inferred</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Parent Relationships */}
       <ParentRelationshipsDisplay 

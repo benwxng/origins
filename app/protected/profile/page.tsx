@@ -10,7 +10,6 @@ import { ProfileForm } from "@/components/profile-form";
 import { ProfileOverview } from "@/components/profile-overview";
 import { ParentAssignmentDropdown } from "@/components/parent-assignment-dropdown";
 import { ParentRelationshipsDisplay } from "@/components/parent-relationships-display";
-import { StorageTest } from "@/components/storage-test";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -23,19 +22,15 @@ export default async function ProfilePage() {
     return redirect("/auth/login");
   }
 
-  // Fetch user profile data
+  // Fetch user profile data from family_members table
   const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  // Get current user's family member ID
-  const { data: familyMember } = await supabase
     .from("family_members")
-    .select("id")
+    .select("*")
     .eq("user_id", user.id)
     .single();
+
+  // Get current user's family member ID (same as profile.id)
+  const familyMember = profile ? { id: profile.id } : null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -49,18 +44,6 @@ export default async function ProfilePage() {
         {/* Profile Overview Card */}
         <div className="lg:col-span-1">
           <ProfileOverview profile={profile} user={user} />
-
-            {/* Storage Test */}
-            <Card className="bg-card shadow-sm border-border mt-4">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-card-foreground">
-                  Storage Test
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StorageTest />
-              </CardContent>
-            </Card>
 
             {/* Parent Assignment */}
             <Card className="bg-card shadow-sm border-border mt-4">

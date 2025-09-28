@@ -124,11 +124,11 @@ export default function GenerationFamilyTree() {
 
         console.log("Loading family tree for user:", user.id);
 
-        // Get user profile
+        // Get user profile from family_members table
         const { data: profile } = await supabase
-          .from("profiles")
+          .from("family_members")
           .select("id, full_name, avatar_url")
-          .eq("id", user.id)
+          .eq("user_id", user.id)
           .single();
 
         console.log("User profile:", profile);

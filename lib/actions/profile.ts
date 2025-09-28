@@ -84,20 +84,18 @@ export async function updateProfile(formData: any, avatarFile: File | null) {
       }
     }
 
-    // Update or insert profile data
+    // Update family member data (since we're not using profiles table anymore)
     const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert({
-        id: user.id,
+      .from("family_members")
+      .update({
         full_name: formData.full_name,
-        username: formData.username,
         phone_number: formData.phone || null,
-        location: formData.location || null,
         pronouns: formData.pronouns || null,
         bio: formData.bio || null,
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
-      });
+      })
+      .eq("user_id", user.id);
 
     if (profileError) {
       throw new Error(`Failed to update profile: ${profileError.message}`);

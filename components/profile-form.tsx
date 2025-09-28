@@ -22,7 +22,6 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
     username: profile?.username || user.email?.split("@")[0] || "",
     email: user.email || "",
     phone: profile?.phone_number || "",
-    location: profile?.location || "",
     pronouns: profile?.pronouns || "",
     bio: profile?.bio || "",
   });
@@ -172,19 +171,6 @@ export function ProfileForm({ profile, user }: ProfileFormProps) {
                 value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="Enter your phone number"
-                className="placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location" className="text-foreground font-medium">
-                Location
-              </Label>
-              <Input
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                placeholder="City, State/Country"
                 className="placeholder:text-muted-foreground"
               />
             </div>

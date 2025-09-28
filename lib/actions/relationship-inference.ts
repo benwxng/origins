@@ -114,15 +114,16 @@ export async function inferAllRelationships(): Promise<void> {
     const childParentMap = new Map<string, string[]>();
 
     parentChildRels.forEach(rel => {
-      if (!parentChildMap.has(rel.person_b_id)) {
-        parentChildMap.set(rel.person_b_id, []);
+      // person_a is parent, person_b is child
+      if (!parentChildMap.has(rel.person_a_id)) {
+        parentChildMap.set(rel.person_a_id, []);
       }
-      parentChildMap.get(rel.person_b_id)!.push(rel.person_a_id);
+      parentChildMap.get(rel.person_a_id)!.push(rel.person_b_id);
 
-      if (!childParentMap.has(rel.person_a_id)) {
-        childParentMap.set(rel.person_a_id, []);
+      if (!childParentMap.has(rel.person_b_id)) {
+        childParentMap.set(rel.person_b_id, []);
       }
-      childParentMap.get(rel.person_a_id)!.push(rel.person_b_id);
+      childParentMap.get(rel.person_b_id)!.push(rel.person_a_id);
     });
 
     // Clear all existing inferred relationships
@@ -193,7 +194,7 @@ async function inferRelationshipsForPerson(
       });
     });
 
-    // Add grandparent relationships
+    // Add grandparent relationships (from person's perspective)
     grandparents.forEach(grandParentId => {
       relationshipsToAdd.push({
         person_a_id: personId,
@@ -212,7 +213,7 @@ async function inferRelationshipsForPerson(
       });
     });
 
-    // Add grandchild relationships
+    // Add grandchild relationships (from person's perspective)
     grandchildren.forEach(grandChildId => {
       relationshipsToAdd.push({
         person_a_id: personId,
@@ -465,7 +466,123 @@ export async function removeCircularRelationships(): Promise<{ success: boolean;
   }
 }
 
+// Fix circular relationships between specific users
+export async function fixCircularRelationships(): Promise<{ success: boolean; error?: string; fixedCount?: number }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    // Get all parent relationships
+    const { data: relationships } = await supabase
+      .from("family_relationships")
+      .select("*")
+      .eq("relationship_type", "parent");
+
+    if (!relationships) {
+      return { success: true, fixedCount: 0 };
+    }
+
+    let fixedCount = 0;
+    const relationshipsToRemove: string[] = [];
+
+    // Find circular relationships (A is parent of B AND B is parent of A)
+    for (const rel1 of relationships) {
+      for (const rel2 of relationships) {
+        if (rel1.id !== rel2.id && 
+            rel1.person_a_id === rel2.person_b_id && 
+            rel1.person_b_id === rel2.person_a_id) {
+          
+          console.log(`Found circular relationship: ${rel1.person_a_id} <-> ${rel1.person_b_id}`);
+          
+          // Remove the newer relationship (keep the older one)
+          const relationshipToRemove = rel1.created_at > rel2.created_at ? rel1 : rel2;
+          relationshipsToRemove.push(relationshipToRemove.id);
+          fixedCount++;
+        }
+      }
+    }
+
+    // Remove circular relationships
+    if (relationshipsToRemove.length > 0) {
+      const { error } = await supabase
+        .from("family_relationships")
+        .delete()
+        .in("id", relationshipsToRemove);
+
+      if (error) {
+        console.error("Error removing circular relationships:", error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    // Regenerate inferred relationships
+    await inferAllRelationships();
+
+    revalidatePath("/protected/family-tree");
+    revalidatePath("/protected/family-members");
+    revalidatePath("/protected/profile");
+    
+    return { success: true, fixedCount };
+  } catch (error) {
+    console.error("Error fixing circular relationships:", error);
+    return { success: false, error: "Failed to fix circular relationships" };
+  }
+}
+
 // Clear all existing relationships (for reset purposes)
+// Clear all inferred relationships only
+export async function clearInferredRelationships(): Promise<{ success: boolean; error?: string; removedCount?: number }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    const { data: relationships, error } = await supabase
+      .from("family_relationships")
+      .select("id")
+      .eq("is_inferred", true);
+
+    if (error) {
+      console.error("Error fetching inferred relationships:", error);
+      return { success: false, error: error.message };
+    }
+
+    const relationshipIds = relationships?.map(rel => rel.id) || [];
+    
+    if (relationshipIds.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("family_relationships")
+        .delete()
+        .in("id", relationshipIds);
+
+      if (deleteError) {
+        console.error("Error deleting inferred relationships:", deleteError);
+        return { success: false, error: deleteError.message };
+      }
+    }
+
+    revalidatePath("/protected/family-tree");
+    revalidatePath("/protected/family-members");
+    revalidatePath("/protected/profile");
+    
+    return { success: true, removedCount: relationshipIds.length };
+  } catch (error) {
+    console.error("Error clearing inferred relationships:", error);
+    return { success: false, error: "Failed to clear inferred relationships" };
+  }
+}
+
 export async function clearAllRelationships(): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
