@@ -7,6 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { User, Mail, Phone, MapPin, Camera, Save } from "lucide-react";
 import { ProfileForm } from "@/components/profile-form";
+import { ProfileOverview } from "@/components/profile-overview";
+import { ParentAssignmentDropdown } from "@/components/parent-assignment-dropdown";
+import { ParentRelationshipsDisplay } from "@/components/parent-relationships-display";
+import { StorageTest } from "@/components/storage-test";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -26,71 +30,58 @@ export default async function ProfilePage() {
     .eq("id", user.id)
     .single();
 
+  // Get current user's family member ID
+  const { data: familyMember } = await supabase
+    .from("family_members")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="py-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-        <p className="text-gray-700">Manage your personal information and preferences</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Profile Settings</h1>
+        <p className="text-muted-foreground">Manage your personal information and preferences</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Overview Card */}
         <div className="lg:col-span-1">
-          <Card className="bg-white shadow-sm">
-            <CardHeader className="text-center pb-4">
-              <div className="relative inline-block">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt="Profile"
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-gray-400" />
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                >
-                  <Camera className="w-4 h-4" />
-                </Button>
-              </div>
-              <CardTitle className="text-xl text-gray-900">
-                {profile?.full_name || user.user_metadata?.full_name || "Your Name"}
-              </CardTitle>
-              <p className="text-gray-700 text-sm">
-                {profile?.username || user.email?.split("@")[0] || "username"}
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center text-sm text-gray-800">
-                <Mail className="w-4 h-4 mr-2 text-gray-600" />
-                <span className="truncate">{user.email}</span>
-              </div>
-              {profile?.phone && (
-                <div className="flex items-center text-sm text-gray-800">
-                  <Phone className="w-4 h-4 mr-2 text-gray-600" />
-                  <span>{profile.phone}</span>
-                </div>
-              )}
-              {profile?.location && (
-                <div className="flex items-center text-sm text-gray-800">
-                  <MapPin className="w-4 h-4 mr-2 text-gray-600" />
-                  <span>{profile.location}</span>
-                </div>
-              )}
-              {profile?.pronouns && (
-                <div className="flex items-center text-sm text-gray-800">
-                  <span className="font-medium mr-2">Pronouns:</span>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">{profile.pronouns}</Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ProfileOverview profile={profile} user={user} />
+
+            {/* Storage Test */}
+            <Card className="bg-card shadow-sm border-border mt-4">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-card-foreground">
+                  Storage Test
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StorageTest />
+              </CardContent>
+            </Card>
+
+            {/* Parent Assignment */}
+            <Card className="bg-card shadow-sm border-border mt-4">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-card-foreground">
+                  Family Relationships
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ParentAssignmentDropdown currentUserId={user.id} />
+              </CardContent>
+            </Card>
+
+          {/* Parent Relationships Display */}
+          {familyMember && (
+            <ParentRelationshipsDisplay 
+              familyMemberId={familyMember.id} 
+              isOwnProfile={true}
+              canEdit={true}
+            />
+          )}
         </div>
 
         {/* Profile Form */}

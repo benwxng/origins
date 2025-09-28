@@ -8,10 +8,12 @@ import { getPosts } from "@/lib/actions/posts";
 import { PostCard } from "@/components/post-card";
 
 interface FamilyMember {
+  id: string;
   full_name: string;
   relationship: string;
   profile_image_url?: string;
-  user_id: string;
+  user_id: string | null;
+  avatar_url?: string;
 }
 
 interface Post {
@@ -38,15 +40,15 @@ export default async function FamilyFeedPage() {
   const posts = (await getPosts()) as Post[];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 bg-yellow-100 min-h-screen p-6">
+    <div className="max-w-2xl mx-auto space-y-6 bg-background min-h-screen p-6">
       {/* Header with Post Button - Aligned with sidebar title */}
       <div className="flex items-center justify-between py-4 pt-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Family Feed</h1>
-          <p className="text-gray-600">Stay connected with your loved ones</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Family Feed</h1>
+          <p className="text-muted-foreground">Stay connected with your loved ones</p>
         </div>
         <CreatePostModal>
-          <Button className="bg-green-900 hover:bg-green-950">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             New Post
           </Button>
@@ -56,19 +58,19 @@ export default async function FamilyFeedPage() {
       {/* Posts Feed */}
       <div className="space-y-4">
         {posts.length === 0 ? (
-          <Card className="bg-white shadow-sm">
+          <Card className="bg-card shadow-sm border-border">
             <CardContent className="p-12 text-center">
               <div className="space-y-4">
-                <Heart className="w-16 h-16 text-gray-300 mx-auto" />
-                <h3 className="text-lg font-semibold text-gray-700">
+                <Heart className="w-16 h-16 text-muted-foreground mx-auto" />
+                <h3 className="text-lg font-semibold text-card-foreground">
                   No posts yet
                 </h3>
-                <p className="text-gray-500 max-w-md mx-auto">
+                <p className="text-muted-foreground max-w-md mx-auto">
                   Be the first to share a memory, milestone, or update with your
                   family!
                 </p>
                 <CreatePostModal>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Plus className="w-4 h-4 mr-2" />
                     Create First Post
                   </Button>

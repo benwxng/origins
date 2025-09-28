@@ -66,3 +66,47 @@ export function formatRelationshipType(relationshipType: string): string {
 
   return formatMap[relationshipType] || relationshipType;
 }
+
+export function getGenderSpecificRelationship(
+  relationshipType: string, 
+  personPronouns: string | null | undefined
+): string {
+  if (!personPronouns) {
+    return formatRelationshipType(relationshipType);
+  }
+
+  const pronouns = personPronouns.toLowerCase();
+  const isMale = pronouns.includes('he/him') || pronouns.includes('he/they');
+  const isFemale = pronouns.includes('she/her') || pronouns.includes('she/they');
+
+  // Gender-specific relationship mappings
+  const genderSpecificMap: { [key: string]: { male: string; female: string; neutral: string } } = {
+    parent: { male: "Father", female: "Mother", neutral: "Parent" },
+    child: { male: "Son", female: "Daughter", neutral: "Child" },
+    sibling: { male: "Brother", female: "Sister", neutral: "Sibling" },
+    spouse: { male: "Husband", female: "Wife", neutral: "Spouse/Partner" },
+    grandparent: { male: "Grandfather", female: "Grandmother", neutral: "Grandparent" },
+    grandchild: { male: "Grandson", female: "Granddaughter", neutral: "Grandchild" },
+    aunt_uncle: { male: "Uncle", female: "Aunt", neutral: "Aunt/Uncle" },
+    niece_nephew: { male: "Nephew", female: "Niece", neutral: "Niece/Nephew" },
+    cousin: { male: "Cousin", female: "Cousin", neutral: "Cousin" },
+    parent_in_law: { male: "Father-in-law", female: "Mother-in-law", neutral: "Parent-in-law" },
+    child_in_law: { male: "Son-in-law", female: "Daughter-in-law", neutral: "Child-in-law" },
+    sibling_in_law: { male: "Brother-in-law", female: "Sister-in-law", neutral: "Sibling-in-law" },
+    great_aunt_uncle: { male: "Great Uncle", female: "Great Aunt", neutral: "Great Aunt/Uncle" },
+    great_niece_nephew: { male: "Great Nephew", female: "Great Niece", neutral: "Great Niece/Nephew" },
+  };
+
+  const relationship = genderSpecificMap[relationshipType];
+  if (!relationship) {
+    return formatRelationshipType(relationshipType);
+  }
+
+  if (isMale) {
+    return relationship.male;
+  } else if (isFemale) {
+    return relationship.female;
+  } else {
+    return relationship.neutral;
+  }
+}
